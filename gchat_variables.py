@@ -1,19 +1,15 @@
 import os, sys
 import numpy as np 
 import pandas as pd 
-from gchat_eml import Gchat 
+from gchat_eml import Gchat, locate_eml, gtime_to_datetime
 
 work_dir = sys.argv[1]
 output_file = sys.argv[2]
 
-subchats_folder = [work_dir + '/' + dir for dir in os.listdir(work_dir) if 'subchats' in dir]
-files = []
-for folder in subchats_folder:
-	listdir = os.listdir(folder)
-	listdir = [folder + '/' + f for f in listdir if 'eml.gz' in f]
-	files += listdir
+files = locate_eml(work_dir)
 
-df = pd.DataFrame(columns=['msg_id', 'gm_id', 'num_msgs_me', 'num_msgs_other', \
+df = pd.DataFrame(columns=['msg_id', 'gm_id', 'start_time', 'sender', \
+							'num_msgs_me', 'num_msgs_other', \
 							'num_msgs_both', 'num_words_tot', \
 							'min_num_words_per_msg','max_num_words_per_msg', \
 							'avg_num_words','chat_duration','avg_frequency', \
@@ -21,9 +17,12 @@ df = pd.DataFrame(columns=['msg_id', 'gm_id', 'num_msgs_me', 'num_msgs_other', \
 							'max_delay_me','max_delay_other'])
 l = len(files) / 10
 corr = 0
-for (ii, f) in enumerate(files):
+for (ii, f) in enumerate(files[:20]):
 	try: 
 		gc = Gchat(f)
+		t = gtime_to_datetime(gc.start_timestamp.split(', ')[1])
+		t = '%04d-%02d-%02d %02d:%02d:%02d' %(t.year, t.month, t.day, t.hour, t.minute, t.second)
+		print t
 		gm_id = f.split('/')[-1]
 		gm_id = gm_id.split('.')[0]
 		msg_id = gc.msg_id
@@ -64,7 +63,8 @@ for (ii, f) in enumerate(files):
 		except: 
 			max_delay_other = 0
 
-		df.loc[ii] = [msg_id, gm_id, num_msgs_me, num_msgs_other, num_msgs_both, \
+		df.loc[ii] = [msg_id, gm_id, t, gc.msg_from_address, \
+						num_msgs_me, num_msgs_other, num_msgs_both, \
 						num_words_tot, min_num_words_per_msg, max_num_words_per_msg, \
 						avg_num_words, chat_duration, avg_frequency, initiator, \
 						max_cont_num_msgs_me, max_cont_num_msgs_other, max_delay_me, max_delay_other]

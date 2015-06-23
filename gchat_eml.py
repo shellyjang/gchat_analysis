@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
+import re, json,time
 
 class Gchat:
 	def __init__(self, file_name):
@@ -24,6 +25,7 @@ class Gchat:
 
 		search = 0
 		self.msg = {}
+		# msg = {}
 		for item in pieces[4:]:
 			if 'Content-Type' in item and 'html' in item and search == 0:
 				search = 1 - search
@@ -40,17 +42,10 @@ class Gchat:
 		self.logs = pd.DataFrame(columns=['timestamp','sender','message'])
 
 		s1, s2, sender = '', '', ''
-		entry = divs[0]
 		try:
-			ts = entry.contents[0].text.encode('ascii','ignore')
-		except:
-			ts = 'NULL'
-
-		for (ii, entry) in enumerate(divs):	
-			if len(entry.contents) == 2:
-				
+			ts = divs[0].contents[0].text.encode('ascii','ignore')
+			for (ii, entry) in enumerate(divs):			
 				tmp = entry.contents[0].text.encode('ascii','ignore')
-
 				if tmp != "":
 					ts = tmp
 				foo = entry.contents[1]
@@ -65,6 +60,9 @@ class Gchat:
 				except AttributeError:
 					msg = foo.span.text
 				self.logs.loc[ii] = [ts, sender, msg]
+		except:
+			print('%s is corrupted' % file_name)
+			pass
 
 	def num_messages(self):
 		num_me = len(self.logs[self.logs.sender=='me'])
@@ -106,6 +104,12 @@ class Gchat:
 		return (te - ts).total_seconds()
 
 	def frequency_analysis(self):
+		# ts = self.start_timestamp.split(', ')[1]
+		# if not ts[:2].isdigit():
+		# 	ts = '0' + ts
+		# a = re.search('[0-9]{2}:[0-9]{2}:[0-9]{2}', ts)
+		# ts = ts[:a.end()]
+		# start_date = datetime.strptime(ts, '%d %b %Y %H:%M:%S')
 		try: 
 			avg_f = (len(self.logs) / (self.te - self.ts).total_seconds())
 		except ZeroDivisionError:
@@ -120,7 +124,7 @@ class Gchat:
 			s1, s2 = self.logs.sender.unique()
 		except:
 			s1, s2 = self.logs.sender[0], ''
-
+		# sender_seq = list(self.logs.sender)
 		curr_len = 1
 		max_len_s1, max_len_s2 = 0, 0
 		if self.logs.sender[0] == s1:
@@ -145,35 +149,68 @@ class Gchat:
 		return self.logs.delay
 
 	def max_delayer(self):
-		self.delay()
+		# self.delay()
+		self.logs['delay'] = self.delay()
 		my_logs = self.logs[self.logs.sender == 'me']
 		their_logs = self.logs[self.logs.sender != 'me']
 		if my_logs.delay.max() > their_logs.delay.max():
-			return ('me', my_logs.delay.max())
+			return ('me', my_logs.delay.max().seconds)
 		else:
-			return (their_logs.sender[0], their_logs.delay.max())
+			return (their_logs.sender.iloc[0], their_logs.delay.max().seconds)
 
 	def corpus_writer(self, file_name, mode='a'):
-		my_logs = self.logs[self.logs.sender == 'me']
-		their_logs = self.logs[self.logs.sender != 'me']
+		f1 = open(file_name, 'a')
+		f2 = open(file_name + '_mywords','a')
+		start_datetime = ' '.join(self.start_timestamp.split()[1:4])
+		t = datetime.strptime(start_datetime, '%d %b %Y')
 
-		g = open(file_name, 'a')
-		g.write('msg_id: %s \n' % self.msg_id)
-		g.write('timestamp: %s \n' % self.start_timestamp)
-		g.write('account: %s \n' % self.msg_to)
-		g.write('sender: %s \n' % self.msg_from_address)
-		g.write('message: ' + ' '.join(list(their_logs.message)) + '\n')
-		g.write('\n')
-		g.close()
+		for r in self.logs.iterrows():
+			r_ = r[1]
+			if r_.sender == 'me':
+				f2.write('%d-%d-%02d|%s|%s|%s\n' % (t.year, t.month, t.day, r_.timestamp, r_.sender, r_.message))
+			else:
+				f1.write('%d-%d-%02d|%s|%s|%s\n' % (t.year, t.month, t.day, r_.timestamp, r_.sender, r_.message))
+		f1.close()
+		f2.close()
 
-		g = open(file_name + '_mywords', 'a')
-		g.write('msg_id: %s \n' % self.msg_id)
-		g.write('timestamp: %s \n' % self.start_timestamp)
-		g.write('account: %s \n' % self.msg_to)
-		g.write('sender: %s \n' % self.msg_from_address)
-		g.write('message: ' + ' '.join(list(my_logs.message)) + '\n')
-		g.write('\n')
-		g.close()
+
+class Metadata:
+	def __init__(self, line):
+		try:
+			d = json.loads(line)
+			self.gm_id = d['gm_id']
+
+			t = d['internal_date']
+			t = time.gmtime(int(t))
+			td = datetime(year=t.tm_year, month=t.tm_mon, day=t.tm_mday, hour=t.tm_hour, minute=t.tm_min, second=t.tm_sec)
+			self.timestamp = td.strftime("%Y-%m-%d %H:%M:%S")
+
+			self.msg_id = d['msg_id']
+			self.subject = d['subject'].replace('Chat with ', '')
+			self.subject = self.subject.replace(',',' ')
+			self.thread_ids = d['thread_ids']
+			self.x_gmail_received = d['x_gmail_received']
+
+			self.flags = d['flags']
+			self.flags = ' '.join(self.flags)
+			
+			self.labels = d['labels']
+			self.labels = ' '.join(self.labels)
+			self.status = 'Success'
+		except: 
+			self.status = 'Corrupted'
+
+	def write(self):
+		print ','.join(map(str, [self.timestamp, self.gm_id, self.subject, self.msg_id, self.thread_ids, self.x_gmail_received]))
+
+	def write_file(self, filename):
+		if not self.status == 'Corrupted':
+			f = open(filename, 'a')
+			new_line = ','.join(map(str, [self.timestamp, self.gm_id, self.subject, self.msg_id, self.thread_ids, self.x_gmail_received]))
+			f.write(new_line + '\n')
+		else: 
+			print 'file was corrupted...'
+			return 0
 
 def gtime_to_datetime(time_str):
 	if not time_str[:2].isdigit():
@@ -187,5 +224,29 @@ def msgtime_to_datetime(time_str):
 		time_str = '0' + time_str
 	return datetime.strptime(time_str, '%I:%M %p')
 
+def locate_eml(work_dir, ext='eml.gz'):
+	'''
+	locate the *.eml.gz files from gmvault-db/db/chats/subchats-* directory
+	'''
+	if work_dir[-1] != '/':
+		work_dir += '/'
+
+	subchats_dir = [d for d in os.listdir(work_dir) if 'subchats' in d]
+	files = []
+	for d in subchats_dir:
+		files += [work_dir + '/' + d + '/' + f for f in os.listdir(work_dir + '/' + d) if ext in f]
+	return files
+
 if __name__ == '__main__':
-	print 1
+	gc = Gchat('/Users/Shell/gmvault-db-jangs84/db/chats/subchats-1/1304479349618348157.eml.gz')
+	print gc.max_delayer()
+	# gc.build_chat_log()
+	# gc.count_num_words()
+	# print gc.logs[['sender', 'message', 'num_words']]
+	# print gc.convo_duration()
+	# print gc.initiator()
+	# gc.delay()
+	# print gc.chat_duration()
+	# print gc.frequency_analysis()
+
+

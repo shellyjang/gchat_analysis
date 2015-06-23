@@ -1,24 +1,15 @@
 import os, re, sys
 import MySQLdb, getpass
-from metadata_parser import *
+from metadata_parser import Metadata
+from gchat_eml import locate_eml
 
 # parse the parent directory where all the subchats-N directories are stored
 # using gmvault, this is usually /gmvault-db/db/chats/
-if sys.argv[-1] == '/':
-	work_dir = sys.argv[1][:-1]
-else:
-	work_dir = sys.argv[1] 
-subchats_folder = [work_dir + '/' + dir for dir in os.listdir(work_dir) if 'subchats' in dir]
-
-# list of metadata files in the subchats folders
-files = []
-for folder in subchats_folder:
-	listdir = os.listdir(folder)
-	listdir = [folder + '/' + f for f in listdir if 'meta' in f]
-	files += listdir
+work_dir = sys.argv[1]
+files = locate_eml(work_dir, 'meta')
 print "%d metadata files located" %(len(files))
 
-# determine the output file location and name
+# specify the output file location and name
 try:
 	output_file = sys.argv[2]
 except:
@@ -27,7 +18,7 @@ except:
 l = len(files)/5
 corrupted = 0
 
-for (ii, metadata_file) in enumerate(files):
+for (ii, metadata_file) in enumerate(files[:10]):
 	# line = open(work_dir + metadata_file, 'r').next()
 	line = open(metadata_file, 'r').next()
 	m = Metadata(line)
@@ -39,21 +30,5 @@ for (ii, metadata_file) in enumerate(files):
 		print '%d percent finished...' % (ii / l * 20)
 print '%d of %d files were successfully stored.' %(len(files)-corrupted, len(files))
 
-pwd = getpass.getpass('MySQL server root password:')
-db = MySQLdb.connect(host='localhost',
-					user='root',
-					passwd=pwd,
-					db='gmail')
-cur = db.cursor()
-
-query = "LOAD DATA LOCAL INFILE \
-        \'%s\' \
-        REPLACE \
-        INTO TABLE chats_metadata_shellyjang \
-        FIELDS TERMINATED BY ','\
-        OPTIONALLY ENCLOSED BY '\"';" 
-query = query % (output_file)
-
-cur.execute(query)
-db.commit()	
-
+if __name__ == '__main__':
+	pass
