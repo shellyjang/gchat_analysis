@@ -23,9 +23,16 @@ python corpus_builder.py ~/gmvault-db/db/chats /output/location/
 The script parses out a pre-defined set of temporal variables - num_msgs_me, num_msgs_other, num_msgs_both, num_words_tot, min_num_words_per_msg, max_num_words_per_msg, avg_num_words, chat_duration, avg_frequency, initiator, max_cont_num_msgs_me, max_cont_num_msgs_other, max_delay_me, max_delay_other. The script takes two arguments, the subchats directory and the file name for storing the variables.
 
 ```bash
-python gchat_variables.py ~/gmvault-db/chats /output/location2/metadata.csv
+python gchat_variables.py ~/gmvault-db/db/chats /output/location2/metadata.csv
 ```
 
  * gchat_metadata_store.py
+The script parses out the .meta files generated alongside the eml files. It holds the timestamp, gm_id, subject, msg_id, thread_ids, x_gmail_received.
+
+```bash
+python gchat_metadata_store.py ~/gmvault-db/db/chats /output/location2/metadata2.csv
+```
+
+ * 
 
 [gmvault]:http://gmvault.org/download.html
