@@ -15,6 +15,10 @@ try:
 except:
 	output_file = '/private/tmp/gchat_metadata_store.csv'
 
+f = open(output_file,'w')
+f.write('%s\n' %'timestamp, gm_id, subject, msg_id, thread_ids, x_gmail_received')
+f.close()
+
 l = len(files)/5
 corrupted = 0
 

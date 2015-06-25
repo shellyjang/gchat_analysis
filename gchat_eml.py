@@ -159,11 +159,27 @@ class Gchat:
 			return (their_logs.sender.iloc[0], their_logs.delay.max().seconds)
 
 	def corpus_writer(self, file_name, mode='a'):
+		print 1
 		f1 = open(file_name, 'a')
 		f2 = open(file_name + '_mywords','a')
 		start_datetime = ' '.join(self.start_timestamp.split()[1:4])
 		t = datetime.strptime(start_datetime, '%d %b %Y')
 
+		for r in self.logs.iterrows():
+			r_ = r[1]
+			if r_.sender == 'me':
+				f2.write('%d-%d-%02d|%s|%s|%s\n' % (t.year, t.month, t.day, r_.timestamp, r_.sender, r_.message))
+			else:
+				f1.write('%d-%d-%02d|%s|%s|%s\n' % (t.year, t.month, t.day, r_.timestamp, r_.sender, r_.message))
+		f1.close()
+		f2.close()
+
+	def corpus_writer_yearly(self, file_name, mode='a'):
+		start_datetime = ' '.join(self.start_timestamp.split()[1:4])
+		t = datetime.strptime(start_datetime, '%d %b %Y')
+
+		f1 = open('%s_%d' %(file_name, t.year), 'a')
+		f2 = open('%s_mywords_%d' %(file_name, t.year), 'a')
 		for r in self.logs.iterrows():
 			r_ = r[1]
 			if r_.sender == 'me':
@@ -234,7 +250,7 @@ def locate_eml(work_dir, ext='eml.gz'):
 	subchats_dir = [d for d in os.listdir(work_dir) if 'subchats' in d]
 	files = []
 	for d in subchats_dir:
-		files += [work_dir + '/' + d + '/' + f for f in os.listdir(work_dir + '/' + d) if ext in f]
+		files += [work_dir + d + '/' + f for f in os.listdir(work_dir + d) if ext in f]
 	return files
 
 if __name__ == '__main__':

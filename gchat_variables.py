@@ -22,7 +22,7 @@ for (ii, f) in enumerate(files[:20]):
 		gc = Gchat(f)
 		t = gtime_to_datetime(gc.start_timestamp.split(', ')[1])
 		t = '%04d-%02d-%02d %02d:%02d:%02d' %(t.year, t.month, t.day, t.hour, t.minute, t.second)
-		print t
+		# print t
 		gm_id = f.split('/')[-1]
 		gm_id = gm_id.split('.')[0]
 		msg_id = gc.msg_id
