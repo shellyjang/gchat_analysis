@@ -177,10 +177,8 @@ def off_diagonals(corpus, year, ngram='word'):
 
 
 if __name__ == '__main__':
-    corpus = pickle.load(open('/Users/sj334u/Documents/QS/gchat/gchat_corpus/yearly/yearly_corpus.pkl','r'))
-
-    list1 = ['so_2009']
-    list2 = ['so_2010', 'so_2011', 'so_2012', 'so_2013']
+    # list1 = ['so_2009']
+    # list2 = ['so_2010', 'so_2011', 'so_2012', 'so_2013']
 
     cw = common_words_v1(corpus, list1, list2, ngram='bg')
     df = compare_word_rank(corpus, list1, list2, cw, ngram='bg')

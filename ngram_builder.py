@@ -31,20 +31,6 @@ def fun1(corpus_folder, output_file):
 
 if __name__ == '__main__':
 	if len(sys.argv) == 3:
-		# corpus_folder = '/Users/sj334u/Desktop/corpus/'
-		# output_file = '/private/tmp/yoohoo.pkl'
 		fun1(sys.argv[1], sys.argv[2])
 	else:
-
-
-		corpus = pickle.load(open('/private/tmp/yoohoo.pkl','r'))
-
-		list1 = ['seraphzz@aim.com_mywords']
-		list2 = ['stfnrulz@aim.com_mywords']
-
-		cw = common_words_v1(corpus, list1, list2, ngram='word')
-		# print cw
-		df = compare_word_rank(corpus, list1, list2, cw, ngram='word')
-		# print df.head()
-		bg = biggest_divider(corpus, list1, list2, ngram='word', threshold=0, df=df)
-		print bg.head()
+		print 'please provide appropriate arguments'

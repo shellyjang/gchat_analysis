@@ -254,7 +254,7 @@ def locate_eml(work_dir, ext='eml.gz'):
 	return files
 
 if __name__ == '__main__':
-	gc = Gchat('/Users/Shell/gmvault-db-jangs84/db/chats/subchats-1/1304479349618348157.eml.gz')
+	gc = Gchat('1304479349618348157.eml.gz')
 	print gc.max_delayer()
 	# gc.build_chat_log()
 	# gc.count_num_words()

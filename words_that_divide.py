@@ -16,10 +16,6 @@ if __name__ == '__main__':
 	# fun1()
 	if len(sys.argv) < 4:
 		print 'please provide 1) location of the pickle file, and two lists of corpus you would like to compare'
-		corpus = pickle.load(open('/private/tmp/yoohoo.pkl','r'))
-		list1 = ['seraphzz@aim.com_mywords', 'stfnrulz@aim.com_mywords']
-		list2 = ['ichiromania666@gmail.com_mywords']
-	
 	else:
 		corpus = pickle.load(open(sys.argv[1], 'r'))
 		list1, list2 = eval(sys.argv[2]), eval(sys.argv[3])
