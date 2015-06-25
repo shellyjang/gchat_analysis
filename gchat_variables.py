@@ -17,7 +17,7 @@ df = pd.DataFrame(columns=['msg_id', 'gm_id', 'start_time', 'sender', \
 							'max_delay_me','max_delay_other'])
 l = len(files) / 10
 corr = 0
-for (ii, f) in enumerate(files[:20]):
+for (ii, f) in enumerate(files):
 	try: 
 		gc = Gchat(f)
 		t = gtime_to_datetime(gc.start_timestamp.split(', ')[1])

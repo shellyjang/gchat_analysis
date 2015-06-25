@@ -12,7 +12,7 @@ if corpus_folder[-1] != '/':
 print corpus_folder
 
 l = len(files) / 5
-for (ii, f) in enumerate(files[:10]):
+for (ii, f) in enumerate(files):
 	try:
 		gc = Gchat(f)
 		gc.corpus_writer_yearly(corpus_folder + gc.msg_from_address)

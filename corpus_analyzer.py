@@ -1,9 +1,6 @@
-import matplotlib.pyplot as plt
-import getpass, os
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
-import seaborn as sns
 from copy import copy
 from collections import OrderedDict
 import nltk
@@ -11,7 +8,7 @@ import nltk
 from nltk.collocations import BigramCollocationFinder, TrigramCollocationFinder # QuadgramCollocationFinder
 from nltk.collocations import BigramAssocMeasures, TrigramAssocMeasures
 from nltk.tokenize import RegexpTokenizer
-import operator, pickle
+import operator, pickle, os
 
 bigram_measures = BigramAssocMeasures()
 trigram_measures = TrigramAssocMeasures()

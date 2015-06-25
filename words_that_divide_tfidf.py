@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from corpus_analyzer import word_bag
 import os, sys
 
-def tfidf_scores(work_dir, ngram_range=(1,1), num_results=5):
+def tfidf_scores(work_dir, output_file, ngram_range=(1,1), num_results=5):
 	tf = TfidfVectorizer(analyzer='word', ngram_range=ngram_range, min_df = 0, stop_words = 'english')
 
 	if work_dir[-1] != '/':
@@ -25,21 +25,24 @@ def tfidf_scores(work_dir, ngram_range=(1,1), num_results=5):
 
 	dense = tfidf_matrix.todense()
 
+	g = open(output_file, 'w')
 	for (ii, f) in enumerate(files):
 		chat = dense[ii].tolist()[0]
 		phrase_scores = [pair for pair in enumerate(chat) if pair[1] > 0]
 
 		sorted_phrase_scores = sorted(phrase_scores, key=lambda x: x[1] * -1)
-		print 'words most used in %s' %(f.split('/')[-1])
+		# print 'words most used in %s' %(f.split('/')[-1])
+		g.write('words most used in %s\n' %(f.split('/')[-1]))
 		for phrase, score in [(feature_names[word_id], score) for (word_id, score) in sorted_phrase_scores][:num_results]:
-			print('{0: <20} {1}'.format(phrase, score))
+			# print('{0: <20} {1}'.format(phrase, score))
+			g.write('{0: <20} {1}\n'.format(phrase, score))
 
 if __name__ == '__main__':
-	if len(sys.argv) == 4:
-		tfidf_scores(sys.argv[1], eval(sys.argv[2]), int(sys.argv[3]))
+	if len(sys.argv) == 5:
+		tfidf_scores(sys.argv[1], sys.argv[2], eval(sys.argv[3]), int(sys.argv[4]))
+	elif len(sys.argv) == 4:
+		tfidf_scores(sys.argv[1], sys.argv[2], eval(sys.argv[3]))
 	elif len(sys.argv) == 3:
-		tfidf_scores(sys.argv[1], eval(sys.argv[2]))
-	elif len(sys.argv) == 2:
-		tfidf_scores(sys.argv[1])
+		tfidf_scores(sys.argv[1], sys.argv[2])
 	else:
 		tfidf_scores('/Users/sj334u/Desktop/corpus/')

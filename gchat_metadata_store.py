@@ -22,7 +22,7 @@ f.close()
 l = len(files)/5
 corrupted = 0
 
-for (ii, metadata_file) in enumerate(files[:10]):
+for (ii, metadata_file) in enumerate(files):
 	# line = open(work_dir + metadata_file, 'r').next()
 	line = open(metadata_file, 'r').next()
 	m = Metadata(line)

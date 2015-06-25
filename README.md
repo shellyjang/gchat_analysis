@@ -36,7 +36,7 @@ python gchat_metadata_store.py ~/gmvault-db/db/chats /output/location2/metadata2
 
  * ngram_builder.py
 
-The script builds 1-, 2- and 3-gram frequency dictionary from the chat logs for each corresponder and year. It takes two arguments, the location of corpus files from 'corpus_builder.py' and the name of the output pickle file. 
+The script builds 1-, 2- and 3-gram frequency dictionary from the chat logs for each corresponder and year. It takes two arguments, the location of corpus files from 'corpus_builder.py' and the name of the output pickle file. Depending on the size of your chat log, this may take a few minutes. 
 
 ```bash
 python ngram_builder.py /private/tmp/corpus/ /output/location3/ngrams.pkl
@@ -49,7 +49,7 @@ The script uses the method featured in '[Dataclysm]'. It ranks the common words 
 ```bash
 python words_that_divide.py /output/location3/ngrams.pkl "['friend1@gmail.com_2009_mywords','friend1@gmail.com_2010_mywords', 'friend1@gmail.com_2011_mywords']" "['friend2@gmail.com_2009_mywords','friend2@gmail.com_2010_mywords', 'friend2@gmail.com_2011_mywords']" 
 ```
-this will give you the top 5 'words that divide', if you wish to see 2-grams or 3-grams, you have to provide optional argument 'bg' or 'tg'. Additionally, if you want to see more words or n-grams, provide an additional integer. 
+this will give you the top 5 'words that divide', if you wish to see 2-grams or 3-grams, you have to provide optional argument 'bg' or 'tg'. Depending on the size of your chat log, this may take a few minutes. Additionally, if you want to see more words or n-grams, provide an additional integer. 
 ```bash 
 python words_that_divide.py /output/location3/ngrams.pkl "['friend1@gmail.com_2009_mywords','friend1@gmail.com_2010_mywords', 'friend1@gmail.com_2011_mywords']" "['friend2@gmail.com_2009_mywords','friend2@gmail.com_2010_mywords', 'friend2@gmail.com_2011_mywords']" 'bg' 10
 ```
@@ -59,8 +59,14 @@ python words_that_divide.py /output/location3/ngrams.pkl "['friend1@gmail.com_20
 This script uses tf-idf scores to find the most frequently used, but not necessarily globally frquently used, words in each corpus. Currently, the default is to give top 5 words for each corpus, but you can specify 2- or 3-grams by providing an optional argument as so.
 
 ```bash
-python words_that_divide_tfidf.py /private/tmp/corpus/ "(2,2)" 
+python words_that_divide_tfidf.py /private/tmp/corpus/ /output/location2/result "(2,2)" 
 ```
+This will go thorugh all of the files in the corpus directory. To look for the corresponder and the year you're interested in, try:
+
+```bash
+egrep 'friend1.*2009' -A5 /output/location2/result
+```
+
 Right now, when the range is expanded, this will most likely give you overlapping results (e.g. sign, actually sign, actually sign gchat).
 
 
