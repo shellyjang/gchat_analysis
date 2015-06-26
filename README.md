@@ -1,5 +1,5 @@
 # Google chat analysis
-Were you too busy this year? Lacking the discipline to keep a self-log? Curious about what you & your friends chatted about in 2009?? Go digging around your own chat log!
+Were you too busy this year? Lacking the discipline to keep a self-log? Curious about what you & your friends chatted about in 2009?? Go digging around your own gchat log -- it's been waiting for you!
 
 ## Pre-req
 
