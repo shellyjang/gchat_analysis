@@ -1,11 +1,13 @@
 import os, gzip, sys, re
 from datetime import datetime, timedelta
+from dateutil import parser
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import re, json,time
 from nltk.tokenize import regexp_tokenize, word_tokenize
 from nltk import pos_tag
+from copy import copy
 
 class Gchat:
 	def __init__(self, file_name):
@@ -13,12 +15,12 @@ class Gchat:
 		raw = raw.replace('\r','').replace('=\n','')
 		pieces = raw.split('\n')
 
-		self.start_timestamp = pieces[0].replace('Date: ','')
+		self.start_timestamp = parser.parse(pieces[0].replace('Date: ',''))
 
-		msg_from = pieces[1].replace('From: ','')
+		msg_from = pieces[1].replace('From: ','').strip()
 		a = re.search('\<.*\>', msg_from)
 		self.msg_from_address = msg_from[a.start()+1:a.end()-1]
-		self.msg_from_display = msg_from[1:a.start()-2]
+		self.msg_from_display = msg_from[:a.start()-1]
 
 		self.msg_to = pieces[2].replace('To: ','')
 
@@ -45,11 +47,17 @@ class Gchat:
 
 		s1, s2, sender = '', '', ''
 		try:
-			ts = divs[0].contents[0].text.encode('ascii','ignore')
+			# ts = divs[0].contents[0].text.encode('ascii','ignore')
+			ts = copy(self.start_timestamp)
+			ts = ts.replace(tzinfo=None)
+			ts_ = parser.parse(divs[0].contents[0].text.encode('ascii','ignore'))
+			ts = ts.replace(hour=ts_.hour, minute=ts_.minute, second=0)
 			for (ii, entry) in enumerate(divs):			
 				tmp = entry.contents[0].text.encode('ascii','ignore')
 				if tmp != "":
-					ts = tmp
+					# ts = tmp
+					ts_ = parser.parse(tmp)
+					ts = ts.replace(hour=ts_.hour, minute=ts_.minute, second=0)
 				foo = entry.contents[1]
 				try:
 					sender, msg = foo.span.span.text, foo.span.text
@@ -92,18 +100,8 @@ class Gchat:
 		return (('me', avg_num_me), ('other', avg_num_other), ('both', avg_num))
 
 	def chat_duration(self):
-		gstart = self.start_timestamp
-		gstart = gstart.split(', ')[1]
-		gstart = gtime_to_datetime(gstart)
-
-		ts = self.logs.timestamp.ix[0,0]
-		te = self.logs.timestamp.ix[len(self.logs)-1,0]
-		ts, te = msgtime_to_datetime(ts), msgtime_to_datetime(te)
-		ts = ts.replace(year=gstart.year, month=gstart.month, day=gstart.day)
-		te = te.replace(year=gstart.year, month=gstart.month, day=gstart.day)
-		# ts, te = gtime_to_datetime(ts), gtime_to_datetime(te)
-		self.ts, self.te = ts, te
-		return (te - ts).total_seconds()
+		self.ts, self.te = self.logs['timestamp'].iloc[[0, -1]]
+		return (self.te - self.ts).total_seconds()
 
 	def frequency_analysis(self):
 		# ts = self.start_timestamp.split(', ')[1]
@@ -113,13 +111,13 @@ class Gchat:
 		# ts = ts[:a.end()]
 		# start_date = datetime.strptime(ts, '%d %b %Y %H:%M:%S')
 		try: 
-			avg_f = (len(self.logs) / (self.te - self.ts).total_seconds())
+			avg_f = (len(self.logs)) / (self.chat_duration())
 		except ZeroDivisionError:
 			avg_f = 0
 		return avg_f
 
 	def initiator(self):
-		return self.logs.sender.ix[0]
+		return self.logs['sender'].ix[0]
 
 	def longest_sequence(self):
 		try:
@@ -146,8 +144,7 @@ class Gchat:
 		return (('%s' %s1, max_len_s1), ('%s' %s2, max_len_s2))
 
 	def delay(self):
-		self.logs.datetime = self.logs.timestamp.apply(msgtime_to_datetime)
-		self.logs['delay'] = self.logs.datetime.diff()
+		self.logs['delay'] = self.logs['timestamp'].diff()
 		return self.logs.delay
 
 	def max_delayer(self):
@@ -164,8 +161,9 @@ class Gchat:
 		print 1
 		f1 = open(file_name, 'a')
 		f2 = open(file_name + '_mywords','a')
-		start_datetime = ' '.join(self.start_timestamp.split()[1:4])
-		t = datetime.strptime(start_datetime, '%d %b %Y')
+		# start_datetime = ' '.join(self.start_timestamp.split()[1:4])
+		# t = datetime.strptime(start_datetime, '%d %b %Y')
+		t = self.start_timestamp
 
 		for r in self.logs.iterrows():
 			r_ = r[1]
@@ -177,8 +175,9 @@ class Gchat:
 		f2.close()
 
 	def corpus_writer_yearly(self, file_name, mode='a'):
-		start_datetime = ' '.join(self.start_timestamp.split()[1:4])
-		t = datetime.strptime(start_datetime, '%d %b %Y')
+		# start_datetime = ' '.join(self.start_timestamp.split()[1:4])
+		# t = datetime.strptime(start_datetime, '%d %b %Y')
+		t = self.start_timestamp
 
 		f1 = open('%s_%d' %(file_name, t.year), 'a')
 		f2 = open('%s_mywords_%d' %(file_name, t.year), 'a')
