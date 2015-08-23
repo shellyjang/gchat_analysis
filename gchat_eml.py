@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 import re, json,time
+from nltk.tokenize import regexp_tokenize, word_tokenize
+from nltk import pos_tag
 
 class Gchat:
 	def __init__(self, file_name):
@@ -189,6 +191,19 @@ class Gchat:
 		f1.close()
 		f2.close()
 
+	def pos_tag(self, alphanum_only=True):
+		if alphanum_only:
+			self.logs['tags'] = self.logs['message'].apply(lambda x: pos_tag(regexp_tokenize(x, r'\w+')))
+		else:
+			self.logs['tags'] = self.logs['message'].apply(lambda x: pos_tag(word_tokenize(x)))
+
+		return self.logs['tags']
+
+	def formality_score(self):
+		if 'tags' not in self.logs.columns:
+			self.pos_tag()
+		self.logs['formality'] = self.logs['tags'].apply(formality_score)
+		return self.logs['formality']
 
 class Metadata:
 	def __init__(self, line):
@@ -252,6 +267,29 @@ def locate_eml(work_dir, ext='eml.gz'):
 	for d in subchats_dir:
 		files += [work_dir + d + '/' + f for f in os.listdir(work_dir + d) if ext in f]
 	return files
+
+def formality_score(tagged):
+    '''
+    the formula is from https://trinker.github.io/qdap/vignettes/qdap_vignette.html#formality
+    tagged is a list of tupples (word, pos_tag)
+
+    '''
+    f_tags = r'(NN.*)|(JJ.*)|(\bTO)|(\bIN)|(\bDT)' # noun, adjective, preposition, article
+    c_tags = r'(PRP.*)|(VB.*)|(RB.*)|(\bWRB)|(\bUH)' # pronoun, verb, adverb, interjection
+
+    n_f = map(lambda x: re.match(f_tags, x[1]), tagged)
+    n_f = sum([1 for a in n_f if a])
+    n_c = map(lambda x: re.match(c_tags, x[1]), tagged)
+    n_c = sum([1 for a in n_c if a])
+
+    n_o = len(tagged) - (n_f + n_c)
+    try:
+        F = 50 * ((n_f - n_c) / float(len(tagged)) + 1)
+    except ZeroDivisionError:
+        F = None
+
+    return F
+
 
 if __name__ == '__main__':
 	gc = Gchat('1304479349618348157.eml.gz')
